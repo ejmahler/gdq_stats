@@ -1,0 +1,10 @@
+[package]
+name = "donation_scraper"
+version = "0.1.0"
+authors = ["Elliott Mahler <join.together@gmail.com>"]
+
+[dependencies]
+postgres = { version="0.13", features=["with-chrono"]}
+chrono = "0.2"
+hyper = "0.9"
+regex = "0.2"
