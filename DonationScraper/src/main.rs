@@ -44,14 +44,16 @@ fn main() {
     conn.execute("INSERT INTO DonationEntry (timestamp, donation_count, donation_total) VALUES ($1, $2, $3)",
                  &[&new_entry.timestamp, &new_entry.donation_count, &new_entry.donation_total]).unwrap();
 
-    for row in &conn.query("SELECT id, timestamp, donation_count, donation_total FROM DonationEntry", &[]).unwrap() {
+    let result = conn.query("SELECT id, timestamp, donation_count, donation_total FROM DonationEntry ORDER BY timestamp DESC LIMIT 1", &[]).unwrap();
+    assert_eq!(result.len(), 1);
+    for row in &result {
         let entry = DonationEntry {
             id: row.get(0),
             timestamp: row.get(1),
             donation_count: row.get(2),
             donation_total: row.get(3),
         };
-        println!("id: {}, timestamp: {}, count: {}, total: {}", entry.id, entry.timestamp, entry.donation_count, entry.donation_total);
+        println!("Successfuly added row: id: {}, timestamp: {}, count: {}, total: {}", entry.id, entry.timestamp, entry.donation_count, entry.donation_total);
     }
 }
 
