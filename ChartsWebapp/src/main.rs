@@ -1,43 +1,68 @@
 #![feature(plugin)]
 #![plugin(rocket_codegen)]
 
+#![feature(custom_derive)]
+
 extern crate chrono;
 extern crate rocket;
 extern crate postgres;
+extern crate serde_json;
+
+#[macro_use] extern crate rocket_contrib;
+#[macro_use] extern crate serde_derive;
+
+mod webapp_config;
 
 use std::env;
+use std::path::{Path, PathBuf};
 
 use postgres::{Connection, TlsMode};
 use chrono::{DateTime, UTC};
 
+use rocket_contrib::JSON;
+use rocket::response::NamedFile;
+
+#[derive(Serialize)]
 struct DonationEntry {
-    id: i32,
     timestamp: DateTime<UTC>,
-    donation_count: i32,
-    donation_total: i32,
+    count: i32,
+    total: i32,
 }
+
+#[derive(Serialize)]
+struct DataResponse(Vec<DonationEntry>);
 
 #[get("/")]
 fn index() -> String {
+	format!(include_str!("index.html"), static_base=webapp_config::get_static_base())
+}
+
+#[get("/donation_data")]
+fn get_donation_data() -> JSON<DataResponse>  {
 	let database_uri: String = env::var("GDQ_DATABASE_URI").unwrap();
     let db_connection = Connection::connect(database_uri.as_str(), TlsMode::None).unwrap();
 
-    let query_result = db_connection.query("SELECT id, timestamp, donation_count, donation_total FROM DonationEntry ORDER BY timestamp DESC", &[]).unwrap();
+    let query_result = db_connection.query("SELECT id, timestamp, donation_count, donation_total FROM DonationEntry ORDER BY timestamp ASC", &[]).unwrap();
 
-    let mut result = String::new();
-    for row in &query_result {
-        let entry = DonationEntry {
-            id: row.get(0),
-            timestamp: row.get(1),
-            donation_count: row.get(2),
-            donation_total: row.get(3),
-        };
-        result += format!("<p>id: {}, timestamp: {}, count: {}, total: {}</p>", entry.id, entry.timestamp, entry.donation_count, entry.donation_total).as_str();
-    }
-
-    result
+    let result: Vec<DonationEntry> = query_result.iter().map(|row| DonationEntry { timestamp: row.get(1), count: row.get(2), total: row.get(3) }).collect();
+    JSON(DataResponse(result))
 }
 
+#[get("/donation_data/auto")]
+fn get_donation_data_auto() -> JSON<DataResponse>  {
+	get_donation_data()
+}
+
+#[get("/static/<file..>")]
+fn static_files(file: PathBuf) -> Option<NamedFile> {
+    NamedFile::open(Path::new("static/").join(file)).ok()
+}
+
+
 fn main() {
-    rocket::ignite().mount("/", routes![index]).launch()
+	if webapp_config::use_local_static_handler() {
+		rocket::ignite().mount("/", routes![index, get_donation_data, get_donation_data_auto, static_files]).launch()
+	} else {
+		rocket::ignite().mount("/", routes![index, get_donation_data, get_donation_data_auto]).launch()
+	}
 }

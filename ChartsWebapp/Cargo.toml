@@ -4,7 +4,11 @@ version = "0.1.0"
 authors = ["Elliott Mahler <join.together@gmail.com>"]
 
 [dependencies]
-rocket = "*"
-rocket_codegen = "*"
+rocket = "0.1"
+rocket_codegen = "0.1"
+rocket_contrib = "0.1"
 postgres = { version="0.13", features=["with-chrono"]}
-chrono = "0.2"
+chrono = { version = "0.2", features=["serde"]}
+serde = "*"
+serde_json = "0.8"
+serde_derive = "0.8"

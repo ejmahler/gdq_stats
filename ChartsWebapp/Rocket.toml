@@ -3,6 +3,8 @@ address = "0.0.0.0"
 
 [development]
 port = 8000
+static_base = "/static"
 
 [production]
 port = 8080
+static_base = "https://s3.amazonaws.com/gdq-stats"
