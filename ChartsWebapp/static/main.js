@@ -21,6 +21,11 @@ $(function() {
         }
         setTimeout(performUpdate, getRefreshTimeout());
     });
+
+    //auto refresh the whole page after 2 hours
+    setTimeout(function() {
+        window.location.reload(true);
+    }, 2 * 60 * 60 * 1000);
 });
 
 var getRefreshTimeout = function() {
