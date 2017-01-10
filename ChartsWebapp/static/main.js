@@ -19,44 +19,51 @@ var createChart = function(donation_data) {
         xAxis: {
             type: 'datetime',
             labels: {
-                format: '{value:%b-%d %H:%M}',
-                style: {
-                    color: Highcharts.getOptions().colors[1]
-                }
+                format: '{value:%a %l%P}',
             },
         },
         yAxis: [{ // Primary yAxis
             title: {
                 text: 'Donation Total',
                 style: {
-                    color: Highcharts.getOptions().colors[1]
+                    color: Highcharts.getOptions().colors[0]
                 }
             },
             labels: {
                 format: '${value:,.0f}',
                 style: {
-                    color: Highcharts.getOptions().colors[1]
+                    color: Highcharts.getOptions().colors[0]
                 }
             },
         }, { // Secondary yAxis
             title: {
-                text: 'Donation Count',
+                text: 'Number Of Donations',
                 style: {
-                    color: Highcharts.getOptions().colors[0]
+                    color: Highcharts.getOptions().colors[1]
                 }
             },
             labels: {
                 format: '{value:,.0f}',
                 style: {
-                    color: Highcharts.getOptions().colors[0]
+                    color: Highcharts.getOptions().colors[1]
                 }
             },
             opposite: true
         }],
-        legend: {
-            enabled: false
+        tooltip: {
+            formatter: function () {
+            	if(this.series.name == "Donation Total") {
+	                return '<b>' + this.series.name + '</b><br/>' +
+	                    Highcharts.dateFormat('%A, %b %e %l:%M%P', this.x) + '<br/>$' +
+	                    Highcharts.numberFormat(this.y, 0);
+                } else {
+                	return '<b>' + this.series.name + '</b><br/>' +
+	                    Highcharts.dateFormat('%A, %b %e %l:%M%P', this.x) + '<br/>' +
+	                    Highcharts.numberFormat(this.y, 0,"","");
+                }
+            }
         },
-        exporting: {
+        legend: {
             enabled: false
         },
         series: [{
@@ -70,7 +77,7 @@ var createChart = function(donation_data) {
                 return series_data;
             }())
         },{
-            name: 'Donation Count',
+            name: 'Number Of Donations',
             yAxis: 1,
             data: (function () {
             	var series_data = [];
