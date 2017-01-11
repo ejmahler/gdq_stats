@@ -26,9 +26,9 @@ use rocket::response::NamedFile;
 
 #[derive(Serialize)]
 struct DonationEntry {
-    timestamp: DateTime<UTC>,
-    count: i32,
-    total: i32,
+	timestamp: DateTime<UTC>,
+	count: i32,
+	total: i32,
 }
 
 #[derive(Serialize)]
@@ -47,29 +47,29 @@ fn index() -> String {
 #[get("/donation_data")]
 fn get_donation_data() -> JSON<DataResponse>  {
 	let database_uri: String = env::var("GDQ_DATABASE_URI").unwrap();
-    let db_connection = Connection::connect(database_uri.as_str(), TlsMode::None).unwrap();
+	let db_connection = Connection::connect(database_uri.as_str(), TlsMode::None).unwrap();
 
-    let query_result = db_connection.query("SELECT id, timestamp, donation_count, donation_total FROM DonationEntry ORDER BY timestamp ASC", &[]).unwrap();
+	let query_result = db_connection.query("SELECT id, timestamp, donation_count, donation_total FROM DonationEntry ORDER BY timestamp ASC", &[]).unwrap();
 
-    let result: Vec<DonationEntry> = query_result.iter().map(|row| DonationEntry { timestamp: row.get(1), count: row.get(2), total: row.get(3) }).collect();
-    JSON(DataResponse(result))
+	let result: Vec<DonationEntry> = query_result.iter().map(|row| DonationEntry { timestamp: row.get(1), count: row.get(2), total: row.get(3) }).collect();
+	JSON(DataResponse(result))
 }
 
 #[get("/donation_data/update?<update_form>")]
 fn get_donation_data_update(update_form: DonationQuery) -> JSON<DataResponse>  {
 	let database_uri: String = env::var("GDQ_DATABASE_URI").unwrap();
-    let db_connection = Connection::connect(database_uri.as_str(), TlsMode::None).unwrap();
+	let db_connection = Connection::connect(database_uri.as_str(), TlsMode::None).unwrap();
 
-    let date_field::DateField(since_date) = update_form.since;
-    let query_result = db_connection.query("SELECT id, timestamp, donation_count, donation_total FROM DonationEntry WHERE timestamp > $1 ORDER BY timestamp ASC", &[&since_date]).unwrap();
+	let date_field::DateField(since_date) = update_form.since;
+	let query_result = db_connection.query("SELECT id, timestamp, donation_count, donation_total FROM DonationEntry WHERE timestamp > $1 ORDER BY timestamp ASC", &[&since_date]).unwrap();
 
-    let result: Vec<DonationEntry> = query_result.iter().map(|row| DonationEntry { timestamp: row.get(1), count: row.get(2), total: row.get(3) }).collect();
-    JSON(DataResponse(result))
+	let result: Vec<DonationEntry> = query_result.iter().map(|row| DonationEntry { timestamp: row.get(1), count: row.get(2), total: row.get(3) }).collect();
+	JSON(DataResponse(result))
 }
 
 #[get("/static/<file..>")]
 fn static_files(file: PathBuf) -> Option<NamedFile> {
-    NamedFile::open(Path::new("static/").join(file)).ok()
+	NamedFile::open(Path::new("static/").join(file)).ok()
 }
 
 

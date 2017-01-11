@@ -10,9 +10,9 @@ impl<'v> FromFormValue<'v> for DateField {
 
 	fn from_form_value(form_value: &'v str) -> Result<DateField, ParseError> {
 		let decoded = String::from_form_value(form_value).unwrap();
-        match decoded.parse::<DateTime<UTC>>() {
-        	Ok(date) => Ok(DateField(date)),
-        	Err(error) => {println!("{}", error); Err(error)}
-        }
-    }
+		match decoded.parse::<DateTime<UTC>>() {
+			Ok(date) => Ok(DateField(date)),
+			Err(error) => {println!("{}", error); Err(error)}
+		}
+	}
 }
