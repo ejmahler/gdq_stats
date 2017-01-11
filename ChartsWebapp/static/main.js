@@ -255,14 +255,19 @@ var exponentialSmooth = function(listOfNumbers, smoothFactor) {
 //replaces the largest n% of the numbers in the provided list with an average of the numbers to the left and right
 //the goal is to provide a way to eliminate outliers
 var ironOutTopPercent = function(listOfNumbers, topPercent) {
-	var topValues = topN(listOfNumbers, Math.floor(topPercent * listOfNumbers.length));
+    var size = listOfNumbers.length;
+	var topValues = topN(listOfNumbers, Math.floor(topPercent * size));
 	topValues = arrayToObjectKeys(topValues);
 
-	for(var i = 1; i < listOfNumbers.length - 1; i++) {
+	for(var i = 1; i < size - 1; i++) {
 		if(listOfNumbers[i] in topValues) {
 			listOfNumbers[i] = (listOfNumbers[i - 1] + listOfNumbers[i + 1])/2;
 		}
 	}
+
+    if(listOfNumbers[size - 1] in topValues) {
+        listOfNumbers[size - 1] = (listOfNumbers[size - 2] + listOfNumbers[size - 3])/2;
+    }
 }
 
 //given a list of numbers and n, return the n largest values of listOfNumbers, in sorted order
