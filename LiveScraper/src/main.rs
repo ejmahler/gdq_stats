@@ -39,7 +39,7 @@ fn main() {
     */
     
 
-    let (count, total) = get_current_donation_stats();
+    let (count, total) = get_current_donation_stats(&live_id);
 
     let new_entry = DonationEntry {
     	id: 0,
@@ -65,15 +65,14 @@ fn main() {
     }
 }
 
-fn get_current_donation_stats() -> (i32, i32) {
+fn get_current_donation_stats(event_id: &str) -> (i32, i32) {
 
     //send the request and read the response
     let ssl = NativeTlsClient::new().unwrap();
     let connector = HttpsConnector::new(ssl);
     let client = Client::with_connector(connector);
 
-    let scrape_url: String = env::var("GDQ_SCRAPE_URL").unwrap();
-    //let scrape_url = "https://gamesdonequick.com/tracker/19";
+    let scrape_url = format!("https://gamesdonequick.com/tracker/index/{}", event_id);
 
     let mut response = client.get(scrape_url.as_str()).send().unwrap();
 
