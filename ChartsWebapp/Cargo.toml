@@ -4,11 +4,12 @@ version = "0.1.0"
 authors = ["Elliott Mahler <join.together@gmail.com>"]
 
 [dependencies]
-rocket = "0.1"
-rocket_codegen = "0.1"
-rocket_contrib = "0.1"
-postgres = { version="0.13", features=["with-chrono"]}
-chrono = { version = "0.2", features=["serde"]}
-serde = "*"
-serde_json = "0.8"
-serde_derive = "0.8"
+rocket = "~0.2"
+rocket_codegen = "~0.2"
+rocket_contrib = "~0.2"
+postgres = { version="~0.14", features=["with-chrono"]}
+chrono = { version = "~0.3", features=["serde"]}
+serde = "~0.9"
+serde_json = "~0.9"
+serde_derive = "~0.9"
+lazy_static = "~0.2"
