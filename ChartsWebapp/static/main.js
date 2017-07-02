@@ -52,7 +52,6 @@ var initWithData = function(donationData) {
 		dollarsPerHour.push(deltaTotal / (hoursBetweenSamples > 0 ? hoursBetweenSamples : 1));
 	}
 	ironOutTopPercent(dollarsPerHour, 0.025);
-	exponentialSmooth(dollarsPerHour, 0.4);
 
 	//data series for dollars per donation
 	var dollarsPerDonation = [];
@@ -62,7 +61,6 @@ var initWithData = function(donationData) {
 		dollarsPerDonation.push(deltaTotal / (deltaCount > 0 ? deltaCount : 1));
 	}
 	ironOutTopPercent(dollarsPerDonation, 0.025);
-	exponentialSmooth(dollarsPerDonation, 0.4);
 
 	//create our various charts
 	var totals_chart = createTotalsChart(timestamps, totals);
@@ -86,10 +84,10 @@ var createTotalsChart = function(timestamps, totals) {
             animation: Highcharts.svg,
         },
         title: {
-            text: 'Unofficial AGDQ 2017 Donation Chart',
+            text: 'gdq-charts.xyz - Unofficial SGDQ 2017 Donation Chart',
         },
         subtitle: {
-            text: "No refresh necessary: Data auto-updates every 5 minutes",
+            text: "No refresh necessary; Data auto-updates every 15 minutes",
         },
         xAxis: {
             type: 'datetime',
@@ -244,13 +242,6 @@ var createPerDonationChart = function(timestamps, per_donation_data) {
         }]
     });
 };
-
-//perform exponential smoothing in-place on the provided data
-var exponentialSmooth = function(listOfNumbers, smoothFactor) {
-	for(var i = 1; i < listOfNumbers.length; i++) {
-		listOfNumbers[i] = smoothFactor * listOfNumbers[i] + (1 - smoothFactor) * listOfNumbers[i - 1];
-	}
-}
 
 //replaces the largest n% of the numbers in the provided list with an average of the numbers to the left and right
 //the goal is to provide a way to eliminate outliers
