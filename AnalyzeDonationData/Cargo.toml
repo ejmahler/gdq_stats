@@ -1,0 +1,8 @@
+[package]
+name = "analyze_donation_data"
+version = "0.1.0"
+authors = ["Elliott Mahler <join.together@gmail.com>"]
+
+[dependencies]
+rusqlite = { version="*", features=["chrono"]}
+chrono = "0.2" #FIXME: as of this writing, 0.3 seems to be incompatble with rusqlite

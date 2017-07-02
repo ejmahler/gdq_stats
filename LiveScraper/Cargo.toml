@@ -1,0 +1,11 @@
+[package]
+name = "live_scraper"
+version = "0.1.0"
+authors = ["Elliott Mahler <join.together@gmail.com>"]
+
+[dependencies]
+postgres = { git="https://github.com/sfackler/rust-postgres", features=["with-chrono"]}
+chrono = "~0.4"
+hyper = "~0.10"
+hyper-native-tls = "~0.2"
+regex = "~0.2"
