@@ -10,8 +10,12 @@ $(function() {
 
         var performUpdate = function() {
             $.get(data_update_url, {'since':mostRecentUpdate.toISOString()}).done(function(partialData) {
-                fullData = fullData.concat(partialData);
-                initWithData(fullData);
+
+                //only redraw the chart if there's something to redraw
+                if(partialData.length > 0) {
+                    fullData = fullData.concat(partialData);
+                    initWithData(fullData);
+                }
 
                 mostRecentUpdate = new Date();
 
@@ -54,7 +58,7 @@ var initWithData = function(donationData) {
 		var hoursBetweenSamples = (timestamps[i + 1] - timestamps[i]) / (1000 * 60 * 60);
 		dollarsPerHour.push(deltaTotal / (hoursBetweenSamples > 0 ? hoursBetweenSamples : 1));
 	}
-	ironOutTopPercent(dollarsPerHour, 0.025);
+	dollarsPerHour = ironOutTopPercent(dollarsPerHour, 0.025);
 
 	//data series for dollars per donation
 	var dollarsPerDonation = [];
@@ -63,7 +67,7 @@ var initWithData = function(donationData) {
 		var deltaCount = donationData[i + 1].count - donationData[i].count;
 		dollarsPerDonation.push(deltaTotal / (deltaCount > 0 ? deltaCount : 1));
 	}
-	ironOutTopPercent(dollarsPerDonation, 0.025);
+	dollarsPerDonation = ironOutTopPercent(dollarsPerDonation, 0.025);
 
 	//create our various charts
 	var totals_chart = createTotalsChart(timestamps, current_totals, old_totals);
@@ -320,6 +324,33 @@ var ironOutTopPercent = function(listOfNumbers, topPercent) {
     if(listOfNumbers[size - 1] in topValues) {
         listOfNumbers[size - 1] = (listOfNumbers[size - 2] + listOfNumbers[size - 3])/2;
     }
+
+    var averageWeights = [0.1, 0.2, 0.4, 0.2, 0.1];
+
+    return listOfNumbers.map(function(element, i) {
+        return averagedSample(listOfNumbers, averageWeights, i);
+    });
+}
+
+var averagedSample = function(inputArray, weightArray, index) {
+    var average = 0;
+
+    for(var i = 0; i < weightArray.length; i++) {
+        var sampleIndex = index - Math.floor(weightArray.length / 2) + i;
+        var sample;
+
+        if(sampleIndex < 0) {
+            sample = inputArray[0];
+        } else if(sampleIndex >= inputArray.length) {
+            sample = inputArray[inputArray.length - 1];
+        } else {
+            sample = inputArray[sampleIndex];
+        }
+
+        average += weightArray[i] * sample;
+    }
+
+    return average;
 }
 
 //given a list of numbers and n, return the n largest values of listOfNumbers, in sorted order
