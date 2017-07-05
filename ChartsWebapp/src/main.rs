@@ -32,8 +32,8 @@ lazy_static!{
 	static ref CURRENT_EVENT_ID: String = env::var("GDQ_LIVE_EVENT_ID").unwrap();
 }
 
-static DONATAION_DATA_QUERY: &'static str = "SELECT id, timestamp, donation_count, donation_total FROM DonationEntry WHERE event_id = $1 ORDER BY timestamp ASC";
-static DONATAION_DATA_UPDATE_QUERY: &'static str = "SELECT id, timestamp, donation_count, donation_total FROM DonationEntry WHERE event_id = $1 AND timestamp > $2 ORDER BY timestamp ASC";
+static DONATAION_DATA_QUERY: &'static str = "SELECT id, timestamp, donation_count, donation_total, historic_total FROM DonationEntry WHERE event_id = $1 ORDER BY timestamp ASC";
+static DONATAION_DATA_UPDATE_QUERY: &'static str = "SELECT id, timestamp, donation_count, donation_total, historic_total FROM DonationEntry WHERE event_id = $1 AND timestamp > $2 ORDER BY timestamp ASC";
 
 
 
@@ -43,6 +43,7 @@ struct DonationEntry {
 	timestamp: DateTime<UTC>,
 	count: i32,
 	total: i32,
+	total_2016: i32,
 }
 
 #[derive(Serialize)]
@@ -67,7 +68,7 @@ fn get_donation_data() -> JSON<DataResponse>  {
 
 	let query_result = db_connection.query(DONATAION_DATA_QUERY, &[&*CURRENT_EVENT_ID]).unwrap();
 
-	let result: Vec<DonationEntry> = query_result.iter().map(|row| DonationEntry { timestamp: row.get(1), count: row.get(2), total: row.get(3) }).collect();
+	let result: Vec<DonationEntry> = query_result.iter().map(|row| DonationEntry { timestamp: row.get(1), count: row.get(2), total: row.get(3), total_2016: row.get(4) }).collect();
 	JSON(DataResponse(result))
 }
 
@@ -79,7 +80,7 @@ fn get_donation_data_update(update_form: DonationQuery) -> JSON<DataResponse>  {
 	let date_field::DateField(since_date) = update_form.since;
 	let query_result = db_connection.query(DONATAION_DATA_UPDATE_QUERY, &[&*CURRENT_EVENT_ID, &since_date]).unwrap();
 
-	let result: Vec<DonationEntry> = query_result.iter().map(|row| DonationEntry { timestamp: row.get(1), count: row.get(2), total: row.get(3) }).collect();
+	let result: Vec<DonationEntry> = query_result.iter().map(|row| DonationEntry { timestamp: row.get(1), count: row.get(2), total: row.get(3), total_2016: row.get(4) }).collect();
 	JSON(DataResponse(result))
 }
 
