@@ -1,0 +1,9 @@
+[package]
+name = "transfer_donation_data"
+version = "0.1.0"
+authors = ["Elliott Mahler <join.together@gmail.com>"]
+
+[dependencies]
+postgres = { version="~0.14", features=["with-chrono"]}
+chrono = { version = "~0.3"}
+rusqlite = { version="*", features=["chrono"]}

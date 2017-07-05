@@ -22,36 +22,51 @@ struct DonationEntry {
     donation_count: i32,
     donation_total: i32,
     event_id: String,
+    historic_count: i32,
+    historic_total: i32,
 }
 
 fn main() {
 	let database_uri: String = env::var("GDQ_DATABASE_URI").unwrap();
     let live_id: String =       env::var("GDQ_LIVE_EVENT_ID").unwrap();
 
-    let conn = Connection::connect(database_uri.as_str(), TlsMode::None).unwrap();
-    /*conn.execute("DROP TABLE DonationEntry", &[]).unwrap();
-    conn.execute("CREATE TABLE DonationEntry (
-                    id              SERIAL PRIMARY KEY,
-                    timestamp       TIMESTAMP WITH TIME ZONE NOT NULL,
-                    donation_count           INT,
-                    donation_total           INT
-                  )", &[]).unwrap();
-    */
-    
-
     let (count, total) = get_current_donation_stats(&live_id);
+
+    let conn = Connection::connect(database_uri.as_str(), TlsMode::None).unwrap();
+    let current_timestamp: DateTime<Utc> = Utc::now();
+
+
+    //figure out the start time for live donations
+    let query_result = conn.query("SELECT timestamp FROM DonationEntry WHERE event_id = $1 ORDER BY timestamp ASC LIMIT 1", &[&live_id]).unwrap();
+    let result: Vec<DateTime<Utc>> = query_result.iter().map(|row| row.get(0) ).collect();
+    let live_base = result[0];
+
+    //get the corresponding last year's data
+    let elapsed = current_timestamp.timestamp() - live_base.timestamp();
+
+    let historic_query = conn.query(
+        "SELECT donation_total FROM HistoricDonation WHERE event_id = $1 AND seconds_since_beginning < $2 ORDER BY seconds_since_beginning DESC",
+        &[&"sgdq2016", &elapsed]).unwrap();
+
+    let historic_count = historic_query.len() as i32;
+    let historic_total = historic_query.get(0).get(0);
+
+
+    
 
     let new_entry = DonationEntry {
     	id: 0,
-        timestamp: Utc::now(),
+        timestamp: current_timestamp,
         donation_count: count,
         donation_total: total,
         event_id: live_id,
+        historic_count: historic_count,
+        historic_total: historic_total
     };
-    conn.execute("INSERT INTO DonationEntry (timestamp, donation_count, donation_total, event_id) VALUES ($1, $2, $3, $4)",
-                 &[&new_entry.timestamp, &new_entry.donation_count, &new_entry.donation_total, &new_entry.event_id]).unwrap();
+    conn.execute("INSERT INTO DonationEntry (timestamp, donation_count, donation_total, event_id, historic_count, historic_total) VALUES ($1, $2, $3, $4, $5, $6)",
+                 &[&new_entry.timestamp, &new_entry.donation_count, &new_entry.donation_total, &new_entry.event_id, &new_entry.historic_count, &new_entry.historic_total]).unwrap();
 
-    let result = conn.query("SELECT id, timestamp, donation_count, donation_total, event_id FROM DonationEntry ORDER BY timestamp DESC LIMIT 1", &[]).unwrap();
+    let result = conn.query("SELECT id, timestamp, donation_count, donation_total, event_id, historic_count, historic_total FROM DonationEntry ORDER BY timestamp DESC LIMIT 1", &[]).unwrap();
     assert_eq!(result.len(), 1);
     for row in &result {
         let entry = DonationEntry {
@@ -60,8 +75,10 @@ fn main() {
             donation_count: row.get(2),
             donation_total: row.get(3),
             event_id: row.get(4),
+            historic_count: row.get(5),
+            historic_total: row.get(6),
         };
-        println!("Successfuly added row: id: {}, timestamp: {}, count: {}, total: {}, event_id:{}", entry.id, entry.timestamp, entry.donation_count, entry.donation_total, entry.event_id);
+        println!("Successfuly added row: id: {}, timestamp: {}, count: {}, total: {}, event_id:{}, historic total: {}", entry.id, entry.timestamp, entry.donation_count, entry.donation_total, entry.event_id, entry.historic_total);
     }
 }
 
