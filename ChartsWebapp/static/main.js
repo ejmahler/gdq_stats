@@ -35,9 +35,12 @@ var getRefreshTimeout = function() {
 
 
 var initWithData = function(donationData) {
-	var totals = donationData.map(function(item) {
-		return item.total;
-	});
+	var current_totals = donationData.map(function(item) {
+        return item.total;
+    });
+    var old_totals = donationData.map(function(item) {
+        return item.total_2016;
+    });
 	var timestamps = donationData.map(function(item) {
 		return Date.parse(item.timestamp);
 	});
@@ -46,8 +49,8 @@ var initWithData = function(donationData) {
 	var hourlyTimeStamps
 	var dollarsPerHour = [];
 	var dollarsPerDonation = [];
-	for (var i = 0; i < totals.length - 1; i++) {
-		var deltaTotal = totals[i + 1] - totals[i];
+	for (var i = 0; i < current_totals.length - 1; i++) {
+		var deltaTotal = current_totals[i + 1] - current_totals[i];
 		var hoursBetweenSamples = (timestamps[i + 1] - timestamps[i]) / (1000 * 60 * 60);
 		dollarsPerHour.push(deltaTotal / (hoursBetweenSamples > 0 ? hoursBetweenSamples : 1));
 	}
@@ -55,15 +58,15 @@ var initWithData = function(donationData) {
 
 	//data series for dollars per donation
 	var dollarsPerDonation = [];
-	for (var i = 0; i < totals.length - 1; i++) {
-		var deltaTotal = totals[i + 1] - totals[i];
+	for (var i = 0; i < current_totals.length - 1; i++) {
+		var deltaTotal = current_totals[i + 1] - current_totals[i];
 		var deltaCount = donationData[i + 1].count - donationData[i].count;
 		dollarsPerDonation.push(deltaTotal / (deltaCount > 0 ? deltaCount : 1));
 	}
 	ironOutTopPercent(dollarsPerDonation, 0.025);
 
 	//create our various charts
-	var totals_chart = createTotalsChart(timestamps, totals);
+	var totals_chart = createTotalsChart(timestamps, current_totals, old_totals);
 
 	//remove the first timestamp since we'll no longer be using it
 	timestamps.splice(0,1);
@@ -71,7 +74,7 @@ var initWithData = function(donationData) {
 	var per_donation_chart = createPerDonationChart(timestamps, dollarsPerDonation);
 }
 
-var createTotalsChart = function(timestamps, totals) {
+var createTotalsChart = function(timestamps, totals, old_totals) {
 	Highcharts.setOptions({
         global: {
             useUTC: false
@@ -95,7 +98,7 @@ var createTotalsChart = function(timestamps, totals) {
                 format: '{value:%a %l%P}',
             },
         },
-        yAxis: { // Primary yAxis
+        yAxis: [{ // Primary yAxis
             title: {
                 text: 'Donation Total',
                 style: {
@@ -109,7 +112,22 @@ var createTotalsChart = function(timestamps, totals) {
                 }
             },
             min: 0,
-        },
+        }, {
+            linkedTo: 0,
+            opposite: true,
+            title: {
+                text: 'Donation Total',
+                style: {
+                    color: Highcharts.getOptions().colors[0]
+                }
+            },
+            labels: {
+                format: '${value:,.0f}',
+                style: {
+                    color: Highcharts.getOptions().colors[0]
+                }
+            },
+        }],
         tooltip: {
             formatter: function () {
                 return '<b>' + this.series.name + '</b><br/>' +
@@ -118,13 +136,24 @@ var createTotalsChart = function(timestamps, totals) {
             }
         },
         legend: {
-            enabled: false
+            enabled: true,
+            layout: 'vertical',
+            align: 'right',
+            verticalAlign: 'top',
+            x: -200,
+            floating: true,
         },
         series: [{
-            name: 'Donation Total',
+            name: 'Donation Total (Current)',
             data: _.zip(timestamps, totals),
             color: Highcharts.getOptions().colors[0]
-        }]
+        },{
+            name: 'Donation Total (2016)',
+            data: _.zip(timestamps, old_totals),
+            color: Highcharts.getOptions().colors[3]
+        },
+
+        ]
     });
 };
 
@@ -153,7 +182,7 @@ var createRateChart = function(timestamps, rate_data) {
                 format: '{value:%a %l%P}',
             },
         },
-        yAxis: { // Primary yAxis
+        yAxis: [{ // Primary yAxis
             title: {
                 text: '$ Per Hour',
                 style: {
@@ -167,7 +196,23 @@ var createRateChart = function(timestamps, rate_data) {
                 }
             },
             min: 0,
-        },
+        }, {
+            linkedTo:0,
+            opposite:true,
+            title: {
+                text: '$ Per Hour',
+                style: {
+                    color: Highcharts.getOptions().colors[1]
+                }
+            },
+            labels: {
+                format: '${value:,.0f}',
+                style: {
+                    color: Highcharts.getOptions().colors[1]
+                }
+            },
+            min: 0,
+        }],
         tooltip: {
             formatter: function () {
                 return '<b>' + this.series.name + '</b><br/>' +
@@ -210,7 +255,7 @@ var createPerDonationChart = function(timestamps, per_donation_data) {
                 format: '{value:%a %l%P}',
             },
         },
-        yAxis: { // Primary yAxis
+        yAxis: [{ // Primary yAxis
             title: {
                 text: '$ Per Donation [Average]',
                 style: {
@@ -224,7 +269,23 @@ var createPerDonationChart = function(timestamps, per_donation_data) {
                 }
             },
             min:0,
-        },
+        }, {
+            linkedTo: 0,
+            opposite: true,
+            title: {
+                text: '$ Per Donation [Average]',
+                style: {
+                    color: Highcharts.getOptions().colors[2]
+                }
+            },
+            labels: {
+                format: '${value:,.2f}',
+                style: {
+                    color: Highcharts.getOptions().colors[2]
+                }
+            },
+            min:0,
+        }],
         tooltip: {
             formatter: function () {
                 return '<b>' + this.series.name + '</b><br/>' +
