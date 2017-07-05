@@ -2,7 +2,7 @@ var data_url = "/donation_data";
 var data_update_url = "/donation_data/update";
 
 $(function() {
-	$.get(data_url).done(function(fullData) {
+    $.get(data_url).done(function(fullData) {
         initWithData(fullData);
 
         //now that we have our charts, start refreshing the data every 5 minutes
@@ -39,47 +39,47 @@ var getRefreshTimeout = function() {
 
 
 var initWithData = function(donationData) {
-	var current_totals = donationData.map(function(item) {
+    var current_totals = donationData.map(function(item) {
         return item.total;
     });
     var old_totals = donationData.map(function(item) {
         return item.total_2016;
     });
-	var timestamps = donationData.map(function(item) {
-		return Date.parse(item.timestamp);
-	});
+    var timestamps = donationData.map(function(item) {
+        return Date.parse(item.timestamp);
+    });
 
-	//create a series for dollars per minute
-	var hourlyTimeStamps
-	var dollarsPerHour = [];
-	var dollarsPerDonation = [];
-	for (var i = 0; i < current_totals.length - 1; i++) {
-		var deltaTotal = current_totals[i + 1] - current_totals[i];
-		var hoursBetweenSamples = (timestamps[i + 1] - timestamps[i]) / (1000 * 60 * 60);
-		dollarsPerHour.push(deltaTotal / (hoursBetweenSamples > 0 ? hoursBetweenSamples : 1));
-	}
-	dollarsPerHour = ironOutTopPercent(dollarsPerHour, 0.025);
+    //create a series for dollars per minute
+    var hourlyTimeStamps
+    var dollarsPerHour = [];
+    var dollarsPerDonation = [];
+    for (var i = 0; i < current_totals.length - 1; i++) {
+        var deltaTotal = current_totals[i + 1] - current_totals[i];
+        var hoursBetweenSamples = (timestamps[i + 1] - timestamps[i]) / (1000 * 60 * 60);
+        dollarsPerHour.push(deltaTotal / (hoursBetweenSamples > 0 ? hoursBetweenSamples : 1));
+    }
+    dollarsPerHour = ironOutTopPercent(dollarsPerHour, 0.025);
 
-	//data series for dollars per donation
-	var dollarsPerDonation = [];
-	for (var i = 0; i < current_totals.length - 1; i++) {
-		var deltaTotal = current_totals[i + 1] - current_totals[i];
-		var deltaCount = donationData[i + 1].count - donationData[i].count;
-		dollarsPerDonation.push(deltaTotal / (deltaCount > 0 ? deltaCount : 1));
-	}
-	dollarsPerDonation = ironOutTopPercent(dollarsPerDonation, 0.025);
+    //data series for dollars per donation
+    var dollarsPerDonation = [];
+    for (var i = 0; i < current_totals.length - 1; i++) {
+        var deltaTotal = current_totals[i + 1] - current_totals[i];
+        var deltaCount = donationData[i + 1].count - donationData[i].count;
+        dollarsPerDonation.push(deltaTotal / (deltaCount > 0 ? deltaCount : 1));
+    }
+    dollarsPerDonation = ironOutTopPercent(dollarsPerDonation, 0.025);
 
-	//create our various charts
-	var totals_chart = createTotalsChart(timestamps, current_totals, old_totals);
+    //create our various charts
+    var totals_chart = createTotalsChart(timestamps, current_totals, old_totals);
 
-	//remove the first timestamp since we'll no longer be using it
-	timestamps.splice(0,1);
-	var rate_chart = createRateChart(timestamps, dollarsPerHour);
-	var per_donation_chart = createPerDonationChart(timestamps, dollarsPerDonation);
+    //remove the first timestamp since we'll no longer be using it
+    timestamps.splice(0,1);
+    var rate_chart = createRateChart(timestamps, dollarsPerHour);
+    var per_donation_chart = createPerDonationChart(timestamps, dollarsPerDonation);
 }
 
 var createTotalsChart = function(timestamps, totals, old_totals) {
-	Highcharts.setOptions({
+    Highcharts.setOptions({
         global: {
             useUTC: false
         }
@@ -163,7 +163,7 @@ var createTotalsChart = function(timestamps, totals, old_totals) {
 
 var createRateChart = function(timestamps, rate_data) {
 
-	Highcharts.setOptions({
+    Highcharts.setOptions({
         global: {
             useUTC: false
         }
@@ -236,7 +236,7 @@ var createRateChart = function(timestamps, rate_data) {
 };
 
 var createPerDonationChart = function(timestamps, per_donation_data) {
-	Highcharts.setOptions({
+    Highcharts.setOptions({
         global: {
             useUTC: false
         }
@@ -312,24 +312,51 @@ var createPerDonationChart = function(timestamps, per_donation_data) {
 //the goal is to provide a way to eliminate outliers
 var ironOutTopPercent = function(listOfNumbers, topPercent) {
     var size = listOfNumbers.length;
-	var topValues = topN(listOfNumbers, Math.floor(topPercent * size));
-	topValues = arrayToObjectKeys(topValues);
+    var topValues = topN(listOfNumbers, Math.floor(topPercent * size));
+    topValues = arrayToObjectKeys(topValues);
 
-	for(var i = 1; i < size - 1; i++) {
-		if(listOfNumbers[i] in topValues) {
-			listOfNumbers[i] = (listOfNumbers[i - 1] + listOfNumbers[i + 1])/2;
-		}
-	}
+    for(var i = 1; i < size - 1; i++) {
+        if(listOfNumbers[i] in topValues) {
+            listOfNumbers[i] = (listOfNumbers[i - 1] + listOfNumbers[i + 1])/2;
+        }
+    }
 
     if(listOfNumbers[size - 1] in topValues) {
         listOfNumbers[size - 1] = (listOfNumbers[size - 2] + listOfNumbers[size - 3])/2;
     }
 
-    var averageWeights = [0.1, 0.2, 0.4, 0.2, 0.1];
+    var averageWeights = generateWeights(9, 0.6);
+
+    console.log(averageWeights);
 
     return listOfNumbers.map(function(element, i) {
         return averagedSample(listOfNumbers, averageWeights, i);
     });
+}
+
+var generateWeights = function(n, scale) {
+    var result = Array(n).fill(0);
+    var center = Math.floor(n / 2);
+
+    var currentValue = 1;
+    var sum = currentValue;
+
+    result[center] = currentValue;
+
+    for(var i = 1; i <= center; i++) {
+        currentValue = currentValue * scale;
+
+        result[center - i] = currentValue;
+        result[center + i] = currentValue;
+
+        sum += 2 * currentValue;
+    }
+
+    for(var i = 0; i < result.length; i++) {
+        result[i] /= sum;
+    }
+
+    return result;
 }
 
 var averagedSample = function(inputArray, weightArray, index) {
@@ -355,23 +382,23 @@ var averagedSample = function(inputArray, weightArray, index) {
 
 //given a list of numbers and n, return the n largest values of listOfNumbers, in sorted order
 var topN = function(listOfNumbers, n) {
-	var values = listOfNumbers.slice(0, n);
-	values.sort();
+    var values = listOfNumbers.slice(0, n);
+    values.sort();
 
-	for(var i = n; i < listOfNumbers.length; i++) {
-		var insertIndex = _.sortedIndex(values, listOfNumbers[i]);
-		if(insertIndex > 0) {
-			values.splice(insertIndex, 0, listOfNumbers[i]);
-			values.splice(0, 1);
-		}
-	}
+    for(var i = n; i < listOfNumbers.length; i++) {
+        var insertIndex = _.sortedIndex(values, listOfNumbers[i]);
+        if(insertIndex > 0) {
+            values.splice(insertIndex, 0, listOfNumbers[i]);
+            values.splice(0, 1);
+        }
+    }
 
-	return values;
+    return values;
 }
 
 var arrayToObjectKeys = function(arr) {
-	return arr.reduce(function(acc, cur, i) {
-		acc[cur] = true;
-		return acc;
-	}, {});
+    return arr.reduce(function(acc, cur, i) {
+        acc[cur] = true;
+        return acc;
+    }, {});
 }
